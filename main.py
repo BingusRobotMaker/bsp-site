@@ -1,9 +1,24 @@
+import mysql.connector
 from fastapi import FastAPI, Form, Response
 from jinja2 import Environment, FileSystemLoader
-import os
 
 app = FastAPI()
 env = Environment(loader=FileSystemLoader("templates"))
+
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="Bingus2010!",
+    database="MySQL"
+)
+
+cursor = db.cursor()
+cursor.execute("""
+    CREATE TABLE IF NOT EXISTS pages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        content TEXT
+    )
+""")
 
 @app.get("/")
 async def info():
@@ -17,14 +32,10 @@ async def page_creator_form():
 
 @app.post("/create-page")
 async def create_page(page_text: str = Form(...)):
-    # Get the number of pages
-    pages = os.listdir("pages/")
-    page_count = len(pages)
-
-    # Create a new page with the provided `page_text`
+    # Insert a new page into the database with the provided `page_text`
     try:
-        with open(f"pages/custom-{page_count}.html", "w") as f:
-            f.write(f"<h1>{page_text}</h1>")
+        cursor.execute("INSERT INTO pages (content) VALUES (%s)", (page_text,))
+        db.commit()
     except Exception as e:
         return {"message": str(e)}
 
@@ -34,16 +45,19 @@ async def create_page(page_text: str = Form(...)):
 
 @app.get("/count")
 async def count():
-    pages = os.listdir("pages/")
-    page_count = len(pages)
+    # Get the number of pages from the database
+    cursor.execute("SELECT COUNT(*) FROM pages")
+    page_count = cursor.fetchone()[0]
+
     template = env.get_template("count.html")
     return Response(template.render(page_count=page_count), media_type="text/html")
 
 @app.get("/custom-{page_id}")
 async def custom_page(page_id: int):
     try:
-        with open(f"pages/custom-{page_id}.html", "r") as f:
-            content = f.read()
+        # Get the page content from the database
+        cursor.execute("SELECT content FROM pages WHERE id = %s", (page_id,))
+        content = cursor.fetchone()[0]
     except Exception as e:
         return {"message": str(e)}
 
