@@ -43,14 +43,14 @@ async def create_page(page_text: str = Form(...)):
     <a href='/page-creator'>Back to Page Creator</a>""",
     media_type="text/html")
 
-@app.get("/count")
-async def count():
-    # Get the number of pages from the database
-    cursor.execute("SELECT COUNT(*) FROM pages")
-    page_count = cursor.fetchone()[0]
+@app.get("/pages")
+async def pages():
+    # Retrieve all pages from the database
+    cursor.execute("SELECT id, content FROM pages ORDER BY id DESC")
+    pages = cursor.fetchall()
 
-    template = env.get_template("count.html")
-    return Response(template.render(page_count=page_count), media_type="text/html")
+    template = env.get_template("pages.html")
+    return Response(template.render(pages=pages), media_type="text/html")
 
 @app.get("/custom-{page_id}")
 async def custom_page(page_id: int):
