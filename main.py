@@ -39,9 +39,8 @@ async def create_page(page_text: str = Form(...)):
     except Exception as e:
         return {"message": str(e)}
 
-    return Response("""<h1>Page creation success!!</h1>
-    <a href='/page-creator'>Back to Page Creator</a>""",
-    media_type="text/html")
+    template = env.get_template("success.html")
+    return Response(content=template.render(), media_type="text/html")
 
 @app.get("/pages")
 async def pages():
