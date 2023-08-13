@@ -61,3 +61,21 @@ async def custom_page(page_id: int):
         return {"message": str(e)}
 
     return Response(content=content + "<a href='/page-creator'>Back to Page Creator</a>", media_type="text/html")
+
+
+@app.get("/adminpanel")
+async def admin_panel():
+    template = env.get_template("adminpanel.html")
+    return Response(content=template.render(), media_type="text/html")
+
+@app.post("/clear-database")
+async def clear_database():
+    try:
+        cursor.execute("DELETE FROM pages")
+        cursor.execute("ALTER TABLE pages AUTO_INCREMENT = 1")  # Reset auto-increment counter
+        db.commit()
+    except Exception as e:
+        return {"message": str(e)}
+
+    template = env.get_template("cleared.html")
+    return Response(content=template.render(), media_type="text/html")
